@@ -5,11 +5,14 @@ import json
 API_KEYS = [
     "000f8774b5f8782161820d3a038fddc4"
 ]
-current_api_index = 0 
+current_api_index = 0
 products_data = []
+processed_count = 0
+progress_interval = max(1, total_asins // 100)
 
 with open("./Data/asins.txt", "r") as file:
     ASIN_LIST = [line.strip() for line in file.readlines()]
+total_asins = len(ASIN_LIST)
 
 def fetch_product_data(asin):
     global current_api_index
@@ -33,10 +36,15 @@ def fetch_product_data(asin):
 with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
     results = executor.map(fetch_product_data, ASIN_LIST)
 
-for product_info in results:
-    if product_info is not None:
-        products_data.append(product_info)
-        
+    for product_info in results:
+        if product_info is not None:
+            products_data.append(product_info)
+
+        processed_count += 1
+        if processed_count % progress_interval == 0 or processed_count == total_asins:
+            progress = (processed_count / total_asins) * 100
+            print(f"Progreso: {processed_count}/{total_asins} ({progress:.2f}%)")
+
 with open("./Data/products.json", "w", encoding="utf-8") as f:
     json.dump(products_data, f, ensure_ascii=False, indent=4)
 

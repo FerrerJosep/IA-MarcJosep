@@ -11,7 +11,7 @@ import os
 import concurrent.futures
 
 os.environ['GH_TOKEN'] = 'MARC LO TIENE'
-
+terminos_busqueda = ["moviles", "phones", "moviles baratos", "movil iphones", "movil xiaomi", "movil samsung", "moviles españa", "moviles top", "moviles buenos"]
 asins = set()
 lock = threading.Lock()
 
@@ -74,8 +74,6 @@ def scrape_termino(termino):
     finally:
         driver.quit()
         
-terminos_busqueda = ["moviles", "phones", "moviles baratos", "movil iphones", "movil xiaomi", "movil samsung", "moviles españa", "moviles top", "moviles buenos"]
-
 with concurrent.futures.ThreadPoolExecutor(max_workers=3) as executor:
     executor.map(scrape_termino, terminos_busqueda)
 

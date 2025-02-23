@@ -15,19 +15,18 @@ def safe_get(value, default="null"):
 with open('./Data/products.json', 'r', encoding='utf-8') as json_file:
     products_data = json.load(json_file)
 
-with open('moviles.csv', mode='w', newline='', encoding='utf-8-sig') as file:
+with open('./Data/moviles.csv', mode='w', newline='', encoding='utf-8-sig') as file:
     writer = csv.writer(file)
     writer.writerow(["URL", "Asin", "Precio", "Precio Inicial", "Título", "Estrellas", "Opiniones", "Marca", "Modelo", "Año del modelo", "Dimensiones",
                      "RAM", "Memoria", "Sistema operativo", "Resolución pantalla", "Tamaño pantalla", "Relación aspecto", "Peso", "Tecnología conectividad", "Batería"])
 
     for product in products_data:
         product_information = product.get("product_information", {})
-        
+
         url = safe_get(product.get("brand_url"))
         asin = safe_get(product_information.get("ASIN"))
         product_price = safe_get(product.get("pricing"))
         product_original_price = safe_get(product.get("list_price", product_price))
-        
         product_title = safe_get(product.get("name"))
         product_star_rating = safe_get(product.get("average_rating"))
         product_num_ratings = safe_get(product.get("total_reviews"))
