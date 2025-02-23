@@ -8,11 +8,10 @@ API_KEYS = [
 current_api_index = 0
 products_data = []
 processed_count = 0
-progress_interval = max(1, total_asins // 100)
-
 with open("./Data/asins.txt", "r") as file:
     ASIN_LIST = [line.strip() for line in file.readlines()]
 total_asins = len(ASIN_LIST)
+progress_interval = max(1, total_asins // 100)
 
 def fetch_product_data(asin):
     global current_api_index
@@ -35,11 +34,9 @@ def fetch_product_data(asin):
 
 with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
     results = executor.map(fetch_product_data, ASIN_LIST)
-
     for product_info in results:
         if product_info is not None:
             products_data.append(product_info)
-
         processed_count += 1
         if processed_count % progress_interval == 0 or processed_count == total_asins:
             progress = (processed_count / total_asins) * 100
