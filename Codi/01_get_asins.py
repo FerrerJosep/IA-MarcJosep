@@ -14,6 +14,7 @@ os.environ['GH_TOKEN'] = 'MARC LO TIENE'
 terminos_busqueda = ["moviles", "phones", "moviles baratos", "movil iphones", "movil xiaomi", "movil samsung", "moviles españa", "moviles top", "moviles buenos"]
 asins = set()
 lock = threading.Lock()
+output_file = "./Data/asins.txt"
 
 def scrape_termino(termino):
     options = webdriver.FirefoxOptions()
@@ -77,7 +78,7 @@ def scrape_termino(termino):
 with concurrent.futures.ThreadPoolExecutor(max_workers=3) as executor:
     executor.map(scrape_termino, terminos_busqueda)
 
-with open("./Data/asins.txt", "w") as f:
+with open(output_file, "w") as f:
     f.write("\n".join(asins))
     
 print(f"Scraping completado. Total ASINs únicos guardados: {len(asins)}")

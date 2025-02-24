@@ -4,21 +4,22 @@ import json
 import os
 import time
 
+input_file = "./Data/asins.txt"
+output_file = "./Data/products.jsonl"
 API_KEYS = [
-    # "000f8774b5f8782161820d3a038fddc4",
-    # "e8b3c716e689e349595622c51b62f3a0",
+    "000f8774b5f8782161820d3a038fddc4",
+    "e8b3c716e689e349595622c51b62f3a0",
     "bb655963163ffbd205c11ce8ab3ec6a5",
     "1cc04538226f6d7f7ff0492bfb65fb06"
 ]
 current_api_index = 0
 processed_count = 0
 
-with open("./Data/asins.txt", "r") as file:
+with open(input_file, "r") as file:
     ASIN_LIST = [line.strip() for line in file.readlines()]
 
 total_asins = len(ASIN_LIST)
 progress_interval = max(1, total_asins // 100)
-output_file = "./Data/products.jsonl"
 
 if not os.path.exists(output_file):
     open(output_file, "w").close()
@@ -27,7 +28,6 @@ def fetch_product_data(asin):
     global current_api_index
     for attempt in range(len(API_KEYS)):
         api_key = API_KEYS[current_api_index]
-        print(f"Intentando con API_KEY {current_api_index + 1}: {api_key}")
         payload = {
             'api_key': api_key,
             'url': f'https://www.amazon.es/dp/{asin}',
@@ -51,7 +51,7 @@ def save_to_file(data):
         json.dump(data, f, ensure_ascii=False)
         f.write("\n")
 
-with concurrent.futures.ThreadPoolExecutor(max_workers=3) as executor:
+with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
     results = executor.map(fetch_product_data, ASIN_LIST)
     for product_info in results:
         if product_info is not None:
