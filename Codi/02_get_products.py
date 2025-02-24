@@ -2,10 +2,13 @@ import requests
 import concurrent.futures
 import json
 import os
+import time
 
 API_KEYS = [
-    "000f8774b5f8782161820d3a038fddc4",
-    "e8b3c716e689e349595622c51b62f3a0"
+    # "000f8774b5f8782161820d3a038fddc4",
+    # "e8b3c716e689e349595622c51b62f3a0",
+    "bb655963163ffbd205c11ce8ab3ec6a5",
+    "1cc04538226f6d7f7ff0492bfb65fb06"
 ]
 current_api_index = 0
 processed_count = 0
@@ -22,9 +25,11 @@ if not os.path.exists(output_file):
 
 def fetch_product_data(asin):
     global current_api_index
-    for _ in range(len(API_KEYS)):
+    for attempt in range(len(API_KEYS)):
+        api_key = API_KEYS[current_api_index]
+        print(f"Intentando con API_KEY {current_api_index + 1}: {api_key}")
         payload = {
-            'api_key': API_KEYS[current_api_index],
+            'api_key': api_key,
             'url': f'https://www.amazon.es/dp/{asin}',
             'output_format': 'json',
             'autoparse': 'true',
@@ -34,9 +39,11 @@ def fetch_product_data(asin):
         if response.status_code == 200:
             return response.json()
         else:
-            print(f"Error con API_KEY {current_api_index + 1}: {API_KEYS[current_api_index]}")
+            print(f"Error con API_KEY {current_api_index + 1}: {api_key} (Código {response.status_code})")
             current_api_index = (current_api_index + 1) % len(API_KEYS)
-            print(f"Usando API_KEY {current_api_index + 1}: {API_KEYS[current_api_index]}")
+            print(f"Cambiando a API_KEY {current_api_index + 1}: {API_KEYS[current_api_index]}")
+            time.sleep(1)
+    print(f"Saltando ASIN {asin} tras fallar con todas las API Keys.")
     return None
 
 def save_to_file(data):
