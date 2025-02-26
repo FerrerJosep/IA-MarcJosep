@@ -17,36 +17,25 @@ def safe_get(value, default="null"):
     return str(value).replace("€", "").strip() if value else default
 
 def infer_ram(title):
-    match = re.search(r"\b(1|2|4|8|16|32|64)\s?GB\b", title, re.IGNORECASE)
-    if match:
-        ram = match.group(1)
-        return ram+" GB"
-    return "null"
+    match = re.search(r"\b(\d+)\s?GB\b", title, re.IGNORECASE)
+    return int(match.group(1)) if match else "null"
 
 def infer_memory(title):
-    match = re.search(r"\b(1|32|64|128|256|512|1024)\s?(GB|TB)\b", title, re.IGNORECASE)
+    match = re.search(r"\b(\d+)\s?(GB|TB)\b", title, re.IGNORECASE)
     if match:
         size = int(match.group(1))
         unit = match.group(2).upper()
-        if unit == "TB":
-            memory = size * 1024
-        else:
-            memory = size
-        return str(memory)+" GB"
+        return size * 1024 if unit == "TB" else size
     return "null"
 
 def extract_ram_and_memory(title):
     pattern = r"(\d+)\s?[+/]\s?(\d+)\s?(GB|TB)"
     match = re.search(pattern, title, re.IGNORECASE)
     if match:
-        ram = match.group(1) + " GB"
+        ram = int(match.group(1))
         memory_size = int(match.group(2))
         memory_unit = match.group(3).upper()
-        if memory_unit == "TB":
-            memory = memory_size * 1024
-        else:
-            memory = memory_size
-        memory = str(memory) + " GB"
+        memory = memory_size * 1024 if memory_unit == "TB" else memory_size
         return ram, memory
     return "null", "null"
 
@@ -116,6 +105,8 @@ with open(output_file, mode='w', newline='', encoding='utf-8-sig') as file:
                 marca = limit_length(find_value_by_keywords(product_information, ["fabricante", "marca"]), 25)
                 if marca != "null":
                     marca = marca.replace('\u200e', '').strip().lower()
+                if marca == "no":
+                    marca = "null"
                 modelo = limit_length(find_value_by_keywords(product_information, ["modelo"]), 70)
                 ano = find_value_by_keywords(product_information, ["año"], r"\b\d{4}\b")
                 dimensiones = extract_dimensions(str(product_information))
@@ -144,12 +135,22 @@ with open(output_file, mode='w', newline='', encoding='utf-8-sig') as file:
                 if procesador == "null":
                     procesador = infer_processor(full_description)
 
+                if ram != "null":
+                    ram = int(re.search(r"\b(\d+)\s?GB\b", str(ram)).group(1))
+                if memoria != "null":
+                    match = re.search(r"\b(\d+)\s?(GB|TB)\b", str(memoria))
+                    if match:
+                        size = int(match.group(1))
+                        unit = match.group(2).upper()
+                        memoria = size * 1024 if unit == "TB" else size
+
                 if ram == "null" or memoria == "null":
                     extracted_ram, extracted_memory = extract_ram_and_memory(product_title)
                     if ram == "null":
                         ram = extracted_ram
                     if memoria == "null":
                         memoria = extracted_memory
+
                     
                 writer.writerow([
                     url, asin, product_price, product_original_price, product_title, product_star_rating, product_num_ratings,
