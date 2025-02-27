@@ -39,6 +39,16 @@ def extract_ram_and_memory(title):
         return ram, memory
     return "null", "null"
 
+def remove_gb(value):
+    if value != "null":
+        if isinstance(value, int):
+            return value
+        elif isinstance(value, str):
+            match = re.match(r"^(\d+)\s?GB$", value.strip())
+            if match:
+                return int(match.group(1))
+    return "null"
+
 def infer_screen_size(title):
     match = re.search(r"\b(\d+\.?\d*)\s?(''|\"|pulgadas|in)\b", title, re.IGNORECASE)
     if match:
@@ -61,9 +71,7 @@ def extract_dimensions(text):
     return "null"
 
 def limit_length(value, max_length, default="null"):
-    if value and len(str(value)) <= max_length:
-        return value
-    return default
+    return str(value).strip()[:max_length] if value else default
 
 def format_resolution(resolution):
     if not resolution:
@@ -103,15 +111,23 @@ with open(output_file, mode='w', newline='', encoding='utf-8-sig') as file:
                 product_num_ratings = product.get("total_reviews", "null")
 
                 marca = limit_length(find_value_by_keywords(product_information, ["fabricante", "marca"]), 25)
-                if marca != "null":
-                    marca = marca.replace('\u200e', '').strip().lower()
-                if marca == "no":
-                    marca = "null"
+                marca = marca.replace('\u200e', '').strip().lower() if marca != "null" else "null"
                 modelo = limit_length(find_value_by_keywords(product_information, ["modelo"]), 70)
                 ano = find_value_by_keywords(product_information, ["año"], r"\b\d{4}\b")
                 dimensiones = extract_dimensions(str(product_information))
-                ram = find_value_by_keywords(product_information, ["RAM", "memoria RAM"], r"\b(1|2|4|8|16|32|64)\s?GB\b")
-                memoria = find_value_by_keywords(product_information, ["ROM", "memoria", "capacidad"], r"\b(32|64|128|256|512|1024)\s?(GB|TB)\b")
+                ram = find_value_by_keywords(product_information, ["RAM", "memoria RAM"], r"\d+")
+                memoria = find_value_by_keywords(product_information, ["ROM", "memoria", "capacidad"], r"\b(\d+)\s?(GB|TB)\b")
+                if ram == "null":
+                    ram = infer_ram(product_title)
+                if memoria == "null":
+                    memoria = infer_memory(product_title)
+                if ram == "null" or memoria == "null":
+                    extracted_ram, extracted_memory = extract_ram_and_memory(product_title)
+                    ram = ram if ram != "null" else extracted_ram
+                    memoria = memoria if memoria != "null" else extracted_memory
+                ram = remove_gb(ram)
+                memoria = remove_gb(memoria)
+
                 sistema_operativo = product_information.get("Sistema operativo", "null")
                 resolucion_pantalla = format_resolution(find_value_by_keywords(product_information, ["resolucion", "resolución"]))
                 tamano_pantalla = find_value_by_keywords(product_information, ["pantalla", "pulgadas"], r"\b(\d+\.?\d*)\s?(''|\"|pulgadas|in)\b")
@@ -125,33 +141,12 @@ with open(output_file, mode='w', newline='', encoding='utf-8-sig') as file:
                 camara_frontal = find_value_by_keywords(product_information, ["cámara", "frontal"], r"\b\d+\s?MP\b")
                 procesador = find_value_by_keywords(product_information, ["procesador", "chipset"], r"\b(MediaTek|Snapdragon|Exynos|Helio|Dimensity)\b")
                 color = find_value_by_keywords(product_information, ["color"])
-                
-                if ram == "null":
-                    ram = infer_ram(product_title)
-                if memoria == "null":
-                    memoria = infer_memory(product_title)
+
                 if tamano_pantalla == "null":
                     tamano_pantalla = infer_screen_size(product_title)
                 if procesador == "null":
                     procesador = infer_processor(full_description)
 
-                if ram != "null":
-                    ram = int(re.search(r"\b(\d+)\s?GB\b", str(ram)).group(1))
-                if memoria != "null":
-                    match = re.search(r"\b(\d+)\s?(GB|TB)\b", str(memoria))
-                    if match:
-                        size = int(match.group(1))
-                        unit = match.group(2).upper()
-                        memoria = size * 1024 if unit == "TB" else size
-
-                if ram == "null" or memoria == "null":
-                    extracted_ram, extracted_memory = extract_ram_and_memory(product_title)
-                    if ram == "null":
-                        ram = extracted_ram
-                    if memoria == "null":
-                        memoria = extracted_memory
-
-                    
                 writer.writerow([
                     url, asin, product_price, product_original_price, product_title, product_star_rating, product_num_ratings,
                     marca, modelo, ano, dimensiones, ram, memoria, sistema_operativo, resolucion_pantalla, tamano_pantalla, 
