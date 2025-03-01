@@ -34,9 +34,8 @@ def extract_ram_and_memory(title):
     if match:
         ram = int(match.group(1))
         memory_size = int(match.group(2))
-        memory_unit = match.group(3).upper()
-        memory = memory_size * 1024 if memory_unit == "TB" else memory_size
-        return ram, memory
+        memory_unit = match.group(3).upper() #Siempre era en GB
+        return ram, memory_size
     return "null", "null"
 
 def remove_gb(value):
@@ -127,7 +126,6 @@ with open(output_file, mode='w', newline='', encoding='utf-8-sig') as file:
                     memoria = memoria if memoria != "null" else extracted_memory
                 ram = remove_gb(ram)
                 memoria = remove_gb(memoria)
-
                 sistema_operativo = product_information.get("Sistema operativo", "null")
                 resolucion_pantalla = format_resolution(find_value_by_keywords(product_information, ["resolucion", "resolución"]))
                 tamano_pantalla = find_value_by_keywords(product_information, ["pantalla", "pulgadas"], r"\b(\d+\.?\d*)\s?(''|\"|pulgadas|in)\b")
