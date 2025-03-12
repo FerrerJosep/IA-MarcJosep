@@ -1,56 +1,82 @@
+import time
 import flet as ft
-from customWidgets import CustomTextField, CustomButton, CustomSpacerRow
+import json
+import requests
+from customWidgets import CustomTextField, CustomButton, CustomSpacerRow, CustomAlertDialog
 
 def main(page: ft.Page):
     page.title = "Interfaz de prueba"
-    
-    # Crear los campos de texto
-    memoria_field = CustomTextField(label="Memória", hint_text="Introduce el valor en GB", icon=ft.icons.MEMORY)
-    ram_field = CustomTextField(label="RAM", hint_text="Introduce el valor en GB")
-    precio_field = CustomTextField(label="Precio", hint_text="Introduce el valor en €", icon=ft.icons.EURO)
 
-    # Crear el campo para mostrar el resultado de la predicción
-    resultado_text = ft.Text(value="", size=16, color=ft.colors.GREEN_700)  # Este es el texto que se actualizará
-    
-    # Función para obtener los datos y realizar la predicción
-    def obtenerDatos(e):
-        print("hola")
+    # Campos de entrada
+    estrellas_field = CustomTextField(label="Estrellas", hint_text="Introduce la valoración", valor_defecto="4.5")
+    marca_field = CustomTextField(label="Marca", hint_text="Introduce la marca", valor_defecto="Samsung")
+    dimensiones_field = CustomTextField(label="Dimensiones", hint_text="Formato: Ancho x Alto x Profundidad", valor_defecto="10 x 20 x 5")
+    peso_field = CustomTextField(label="Peso", hint_text="Introduce el peso en kg",    valor_defecto="0.5")
+    memoria_field = CustomTextField(label="Memoria", hint_text="Introduce el valor en GB", icon=ft.icons.MEMORY, valor_defecto="64")
+    ram_field = CustomTextField(label="RAM", hint_text="Introduce el valor en GB", valor_defecto="4")
+    precio_field = CustomTextField(label="Precio", hint_text="Introduce el valor en €", icon=ft.icons.EURO, valor_defecto="200")
 
-        # Obtener los valores de los campos
+    resultado_text = ft.Text(value="", size=16, color=ft.colors.GREEN_700)
+
+    def mostrar_dialogo(titulo, contenido):
+        dlg = CustomAlertDialog(
+            title=ft.Text(titulo),
+            content=ft.Text(contenido),
+            actions=[ft.TextButton("OK", on_click=lambda e: cerrar_dialogo(dlg))],
+            open=True  
+        )
+
+        page.overlay.append(dlg)
+        page.update()
+
+    def cerrar_dialogo(dialogo):
+        dialogo.open = False
+        page.update()
+
+    def obtener_datos(e):
         memoria = memoria_field.value
         ram = ram_field.value
         precio = precio_field.value
+        estrellas = estrellas_field.value
+        marca = marca_field.value
+        dimensiones = dimensiones_field.value
+        peso = peso_field.value
 
-        if memoria.isnumeric() and ram.isnumeric() and precio.isnumeric():
-        
-        # Realizar la predicción
-            resultado = realizarPrediccion(memoria, ram, precio)
-        else:
-            resultado_text.value="Error: Solo se permiten valores numéricos"
-            page.update()
-            return 
-        # Cambiar el texto y el color del resultado
-        if resultado == 0:
-            resultado_text.value = "Mala oferta"
-            resultado_text.color = ft.colors.RED_700  # Cambiar color a rojo
-        else:
-            resultado_text.value = "Buena oferta"
-            resultado_text.color = ft.colors.GREEN_700
-        # Actualizar el texto con el resultado de la predicción
+        resultado = realizar_prediccion(memoria, ram, precio, estrellas, marca, dimensiones, peso)
+
         resultado_text.value = f"Resultado de la predicción: {resultado}"
-        page.update()  # Actualizar la página para reflejar el nuevo valor del texto
+        resultado_text.color = ft.colors.GREEN_700 if resultado == "Buena oferta" else ft.colors.RED_700
+        page.update()
 
-    def realizarPrediccion(memoria, ram, precio):
+    def realizar_prediccion(memoria, ram, precio, estrellas, marca, dimensiones, peso):
+        url = "http://localhost:5000/predecir"
+        data = {
+            "Memoria": memoria,
+            "RAM": ram,
+            "Precio": precio,
+            "Estrellas": estrellas,
+            "Marca": marca,
+            "Dimensiones": dimensiones,
+            "Peso": peso
+        }
         
-        # return model.predict(memoria, ram, precio)  
-        return 0
+        headers = {"Content-Type": "application/json"}
 
-    boton_obtener = CustomButton(accion=obtenerDatos, texto="Comprueba")
+        try:
+            response = requests.post(url, json=data, headers=headers)
+            response_data = response.json()
 
-    # Hacer que cada campo de texto se expanda en el Row y se ajuste a la pantalla
-    # Esto hará que cada TextField ocupe el mismo espacio dentro del Row
+            if "prediccion" in response_data:
+                return response_data["prediccion"]
+            else:
+                return "Error en la predicción"
+
+        except Exception as e:
+            return "Error inesperado"
+
+    boton_obtener = CustomButton(accion=obtener_datos, texto="Comprueba")
+
     page.add(
-        # Añadimos un row vacio para crear un margen.
         CustomSpacerRow(),
         ft.Row(
             [
@@ -58,8 +84,18 @@ def main(page: ft.Page):
                 ft.Column([ram_field], expand=True),
                 ft.Column([precio_field], expand=True),
             ],
-            alignment=ft.MainAxisAlignment.CENTER,  # Alineación central
-            spacing=20,  # Espaciado entre los campos
+            alignment=ft.MainAxisAlignment.CENTER,
+            spacing=20,
+        ),
+        ft.Row(
+            [
+                ft.Column([estrellas_field], expand=True),
+                ft.Column([marca_field], expand=True),
+                ft.Column([dimensiones_field], expand=True),
+                ft.Column([peso_field], expand=True),
+            ],
+            alignment=ft.MainAxisAlignment.CENTER,
+            spacing=20,
         ),
         CustomSpacerRow(),
         ft.Row([boton_obtener], alignment=ft.MainAxisAlignment.CENTER),
@@ -67,6 +103,8 @@ def main(page: ft.Page):
         ft.Row([resultado_text], alignment=ft.MainAxisAlignment.CENTER),
     )
 
-
 if __name__ == "__main__":
     ft.app(target=main)
+
+
+    

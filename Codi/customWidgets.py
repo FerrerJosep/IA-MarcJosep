@@ -7,7 +7,7 @@ import flet as ft
 #   - icon: icono que aparecerá en la parte izquierda del TextField
 #   - escalado: factor de escalado del TextField
 class CustomTextField(ft.TextField):
-    def __init__(self, label, hint_text, icon=None, escalado=None, color_fondo=None, radio_borde=None):
+    def __init__(self, label, hint_text, icon=None, escalado=None, color_fondo=None, radio_borde=None, valor_defecto=None):
         # Aqui se definen los valores por defecto de los campos que pueden ser None
         if color_fondo is None:
             color_fondo = ft.colors.GREY_200
@@ -15,6 +15,9 @@ class CustomTextField(ft.TextField):
             escalado = 1
         if radio_borde is None:
             radio_borde = 10
+        
+        if valor_defecto is None:
+            valor_defecto = 1
 
         if icon is None:
             icon = ft.icons.TEXT_FIELDS
@@ -24,7 +27,8 @@ class CustomTextField(ft.TextField):
             prefix_icon=icon,
             border_radius=radio_borde,
             bgcolor=color_fondo,
-            scale=escalado)
+            scale=escalado,
+            value=valor_defecto)
 
 
 
@@ -48,3 +52,8 @@ class CustomButton(ft.ElevatedButton):
 class CustomSpacerRow(ft.Row):
     def __init__(self, height=40):
         super().__init__(height=height)
+
+
+class CustomAlertDialog(ft.AlertDialog):
+    def __init__(self, title, content, actions, open=False):
+        super().__init__(title=title, content=content, actions=actions, open=open)
