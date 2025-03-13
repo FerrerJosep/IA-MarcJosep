@@ -6,6 +6,19 @@ from customWidgets import CustomTextField, CustomButton, CustomSpacerRow, Custom
 
 def main(page: ft.Page):
     page.title = "Interfaz de prueba"
+    
+    page.theme_mode = ft.ThemeMode.LIGHT  # Set initial theme mode
+
+    
+
+    def alternar_tema(e):
+        print("Alternando tema")
+        if page.theme_mode == ft.ThemeMode.DARK:
+            
+            page.theme_mode = ft.ThemeMode.LIGHT
+        else:
+            page.theme_mode = ft.ThemeMode.DARK
+        page.update()
 
     # Campos de entrada
     estrellas_field = CustomTextField(label="Estrellas", hint_text="Introduce la valoración", valor_defecto="4.5")
@@ -17,23 +30,28 @@ def main(page: ft.Page):
     precio_field = CustomTextField(label="Precio", hint_text="Introduce el valor en €", icon=ft.icons.EURO, valor_defecto="200")
 
     resultado_text = ft.Text(value="", size=16, color=ft.colors.GREEN_700)
+    boton_tema = CustomButton(accion=alternar_tema, texto="Alternar Tema")
 
-    def mostrar_dialogo(titulo, contenido):
+        
+    def mostrar_dialogo_cargando():
         dlg = CustomAlertDialog(
-            title=ft.Text(titulo),
-            content=ft.Text(contenido),
-            actions=[ft.TextButton("OK", on_click=lambda e: cerrar_dialogo(dlg))],
-            open=True  
+            title=ft.Text("Cargando"),
+            content=ft.Text("Por favor, espere..."),
+            open=True,
+            actions=[]
         )
-
         page.overlay.append(dlg)
         page.update()
-
-    def cerrar_dialogo(dialogo):
-        dialogo.open = False
+        time.sleep(3)
+        dlg.open = False
         page.update()
 
+    
+
+    
+
     def obtener_datos(e):
+        mostrar_dialogo_cargando()
         memoria = memoria_field.value
         ram = ram_field.value
         precio = precio_field.value
@@ -47,6 +65,7 @@ def main(page: ft.Page):
         resultado_text.value = f"Resultado de la predicción: {resultado}"
         resultado_text.color = ft.colors.GREEN_700 if resultado == "Buena oferta" else ft.colors.RED_700
         page.update()
+        
 
     def realizar_prediccion(memoria, ram, precio, estrellas, marca, dimensiones, peso):
         url = "http://localhost:5000/predecir"
@@ -101,10 +120,10 @@ def main(page: ft.Page):
         ft.Row([boton_obtener], alignment=ft.MainAxisAlignment.CENTER),
         CustomSpacerRow(),
         ft.Row([resultado_text], alignment=ft.MainAxisAlignment.CENTER),
+        ft.Divider(),
+        ft.Row([boton_tema], alignment=ft.MainAxisAlignment.CENTER),
     )
 
 if __name__ == "__main__":
     ft.app(target=main)
 
-
-    

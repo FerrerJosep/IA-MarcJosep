@@ -1,5 +1,7 @@
 import flet as ft
 
+
+
 # Esta clase hereda de ft.TextField y añade un icono y un color de fondo personalizado
 # Parametros:
 #   - label: texto que aparecerá en la parte superior del TextField
@@ -7,10 +9,10 @@ import flet as ft
 #   - icon: icono que aparecerá en la parte izquierda del TextField
 #   - escalado: factor de escalado del TextField
 class CustomTextField(ft.TextField):
-    def __init__(self, label, hint_text, icon=None, escalado=None, color_fondo=None, radio_borde=None, valor_defecto=None):
+    def __init__(self, label, hint_text, icon=None, escalado=None, color_fondo=None, radio_borde=None, valor_defecto=None, color_letras=None):
         # Aqui se definen los valores por defecto de los campos que pueden ser None
         if color_fondo is None:
-            color_fondo = ft.colors.GREY_200
+            color_fondo = ft.colors.GREY_100
         if escalado is None:
             escalado = 1
         if radio_borde is None:
@@ -18,6 +20,9 @@ class CustomTextField(ft.TextField):
         
         if valor_defecto is None:
             valor_defecto = 1
+
+        if color_letras is None:
+            color_letras = ft.colors.BLACK
 
         if icon is None:
             icon = ft.icons.TEXT_FIELDS
@@ -28,7 +33,10 @@ class CustomTextField(ft.TextField):
             border_radius=radio_borde,
             bgcolor=color_fondo,
             scale=escalado,
-            value=valor_defecto)
+            value=valor_defecto,
+            color=color_letras,
+            hint_style=ft.TextStyle(color=ft.colors.BLACK),
+            )
 
 
 
@@ -38,13 +46,17 @@ class CustomTextField(ft.TextField):
 #   - accion: función que se ejecutará al hacer click en el botón (No puede ser nula porque de normal un boton realiza una acción)
 #   - color: color del botón
 class CustomButton(ft.ElevatedButton):
-    def __init__(self, texto: str, accion, color=None):
-        # Establecemos un color por defecto si no se pasa ninguno
-        if color is None:
-            color = ft.colors.BLUE
+    def __init__(self, texto: str, accion, color_fondo=None, color_letras=None):
+        # Establecemos colores por defecto si no se pasan
+        if color_fondo is None:
+            color_fondo = ft.colors.LIGHT_BLUE_300
+        if color_letras is None:
+            color_letras = ft.colors.BLACK
+        
+        
 
         # Llamamos al constructor de la clase base (ft.ElevatedButton)
-        super().__init__(text=texto, on_click=accion, color=color)
+        super().__init__(text=texto, on_click=accion, bgcolor=color_fondo, color=color_letras)
 
 # Esta clase hereda de ft.Row y añade un espacio en blanco
 # Parametros:

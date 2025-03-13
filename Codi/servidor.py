@@ -7,9 +7,9 @@ from sklearn.preprocessing import StandardScaler
 app = Flask(__name__)
 
 # Cargar modelo, escalador y columnas
-modelo = pickle.load(open("modelo.pkl", "rb"))
-scaler = pickle.load(open("scaler.pkl", "rb"))
-columnas_modelo = pickle.load(open("columnas.pkl", "rb"))
+modelo = pickle.load(open("../modelo.pkl", "rb"))
+scaler = pickle.load(open("../scaler.pkl", "rb"))
+columnas_modelo = pickle.load(open("../columnas.pkl", "rb"))
 
 def procesar_entrada(datos):
     df = pd.DataFrame([datos])
