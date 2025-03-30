@@ -1,0 +1,6 @@
+train: C:/Users/Josep/Desktop/PARKING/datasets/train/images
+val: C:/Users/Josep/Desktop/PARKING/datasets/valid/images
+test: C:/Users/Josep/Desktop/PARKING/datasets/test/images  # Opcional
+
+nc: 1
+names: ["license_plate"]
