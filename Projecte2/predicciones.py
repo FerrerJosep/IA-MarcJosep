@@ -43,12 +43,10 @@ for filename in os.listdir(ruta_cmax):
                 thresh = cv2.erode(thresh, kernel, iterations=1)
                 thresh = cv2.dilate(thresh, kernel, iterations=1)
 
-                # GUARDAMOS IMAGEN PROCESADA PARA REVISAR
                 nombre_base = os.path.splitext(filename)[0]
                 ruta_preprocesada = os.path.join(ruta_detectadas, f"{nombre_base}_crop{idx}_thresh.png")
                 cv2.imwrite(ruta_preprocesada, thresh)
 
-                # OCR
                 ocr_results = reader.readtext(thresh)
                 for result in ocr_results:
                     ocr_text = result[1]
