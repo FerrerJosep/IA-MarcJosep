@@ -27,14 +27,28 @@ for filename in os.listdir(ruta_cmax):
         numbers = []
 
         for result in results:
-            for box in result.boxes:
+            for idx, box in enumerate(result.boxes):
                 x1, y1, x2, y2 = map(int, box.xyxy[0])
                 cv2.rectangle(image, (x1, y1), (x2, y2), (0, 255, 0), 2)
                 cropped_img = image[y1:y2, x1:x2]
 
                 gray = cv2.cvtColor(cropped_img, cv2.COLOR_BGR2GRAY)
-                thresh = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)[1]
+                gray = cv2.bilateralFilter(gray, 11, 17, 17)
+                thresh = cv2.adaptiveThreshold(
+                    gray, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
+                    cv2.THRESH_BINARY_INV, 31, 15
+                )
 
+                kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (2, 2))
+                thresh = cv2.erode(thresh, kernel, iterations=1)
+                thresh = cv2.dilate(thresh, kernel, iterations=1)
+
+                # GUARDAMOS IMAGEN PROCESADA PARA REVISAR
+                nombre_base = os.path.splitext(filename)[0]
+                ruta_preprocesada = os.path.join(ruta_detectadas, f"{nombre_base}_crop{idx}_thresh.png")
+                cv2.imwrite(ruta_preprocesada, thresh)
+
+                # OCR
                 ocr_results = reader.readtext(thresh)
                 for result in ocr_results:
                     ocr_text = result[1]
