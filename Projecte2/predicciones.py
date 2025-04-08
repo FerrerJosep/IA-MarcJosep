@@ -1,13 +1,7 @@
 import cv2
 from ultralytics import YOLO
+import easyocr
 import os
-from roboflow import Roboflow
-
-# Configuración de Roboflow
-rf = Roboflow(api_key="gYrCTgWXR4d5Wi9dChio")
-project = rf.workspace("car-plate-number-detection").project("alphanumeric-character-detection")
-version = project.version(1)
-dataset = version.download("yolov12")
 
 ruta_base = os.path.dirname(__file__)
 ruta_final = os.path.join(ruta_base, "runs/detect/train7/weights/best.pt")
@@ -18,6 +12,8 @@ ruta_detectadas = os.path.join(ruta_base, "test/images_detectadas")
 
 if not os.path.exists(ruta_detectadas):
     os.makedirs(ruta_detectadas)
+
+reader = easyocr.Reader(['en', 'es'])
 
 for filename in os.listdir(ruta_cmax):
     if filename.endswith(".jpg") or filename.endswith(".jpeg") or filename.endswith(".png"):
@@ -51,10 +47,9 @@ for filename in os.listdir(ruta_cmax):
                 ruta_preprocesada = os.path.join(ruta_detectadas, f"{nombre_base}_crop{idx}_thresh.png")
                 cv2.imwrite(ruta_preprocesada, thresh)
 
-                # Usar el modelo Roboflow para detectar texto en la imagen preprocesada
-                predictions = dataset.predict(ruta_preprocesada).json()
-                for prediction in predictions['predictions']:
-                    ocr_text = prediction['class']
+                ocr_results = reader.readtext(thresh)
+                for result in ocr_results:
+                    ocr_text = result[1]
                     if ocr_text.isdigit():
                         numbers.append(ocr_text)
                     elif ocr_text.isalpha():
