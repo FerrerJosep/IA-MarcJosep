@@ -1,6 +1,6 @@
 import cv2
 from ultralytics import YOLO
-import easyocr
+from paddleocr import PaddleOCR
 import os
 import re
 import matplotlib.pyplot as plt
@@ -12,7 +12,7 @@ ruta_resultados = os.path.join(ruta_base, "test/images_detectadas")
 os.makedirs(ruta_resultados, exist_ok=True)
 
 model_yolo = YOLO(ruta_modelo_yolo)
-reader = easyocr.Reader(['en'])
+ocr = PaddleOCR(use_angle_cls=True, lang='en', det=False)  # Solo OCR (no detection)
 
 def preprocess_plate(image):
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
@@ -47,18 +47,22 @@ for filename in os.listdir(ruta_imagenes_test):
                 (tw, th), baseline = cv2.getTextSize(label, cv2.FONT_HERSHEY_SIMPLEX, 0.5, 1)
                 cv2.rectangle(orig_img, (x1, y1 - th - baseline), (x1 + tw, y1), color, -1)
                 cv2.putText(orig_img, label, (x1, y1 - baseline), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), 1)
+
+                # Recorte y preprocesado de la matrícula
                 plate_img = image[y1:y2, x1:x2]
                 processed_plate = preprocess_plate(plate_img)
-                ocr_results = reader.readtext(
-                    processed_plate,
-                    detail=0,
-                    paragraph=True,
-                    allowlist='0123456789BCDFGHJKLMNPQRSTVWXYZ',
-                    batch_size=1,
-                    width_ths=2.0
-                )
-                raw_text = "".join(ocr_results).upper()
+
+                # PaddleOCR espera imágenes en formato array BGR
+                result_ocr = ocr.ocr(processed_plate, cls=True)
+
+                raw_text = ''
+                for line in result_ocr:
+                    for word_info in line:
+                        raw_text += word_info[1][0]
+
+                raw_text = raw_text.upper()
                 formatted_text = format_plate_text(raw_text)
+
                 print(f"\nArchivo: {filename}")
                 print(f"Texto crudo: {raw_text}")
                 print(f"Texto formateado: {formatted_text}")
