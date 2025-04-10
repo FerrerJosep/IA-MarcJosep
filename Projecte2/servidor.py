@@ -7,7 +7,7 @@ import psycopg2
 conn = psycopg2.connect(
     dbname="Aparcamiento",
     user="postgres",
-    password="josep",
+    password="1234",
     host="localhost",   # o IP del servidor
     port="5432"         # 5432 es el puerto por defecto
 )
