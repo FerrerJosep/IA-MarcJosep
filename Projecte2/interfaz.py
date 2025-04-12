@@ -33,19 +33,44 @@ def main(page: ft.Page):
                 informacion_estado_vehiculo.visible = True
 
                 # Calculamos el importe segun el tiempo que ha estado dentro
-                url = "http://localhost:5000/calcularImporte"
-                response = req.get(url, params={"matricula": matricula})
-                minutos=response.json().get('minutos')
+                # url = "http://localhost:5000/calcularImporte"
+                # response = req.get(url, params={"matricula": matricula})
+                # minutos=response.json().get('minutos')
 
-                if minutos != None:
-                    # Si el coche ha estado mas de 1 minuto, se le cobra
-                    importeFinal=minutos*0.1
-                    informacion_importe_vehiculo.value = f"El vehiculo con matrícula {matricula} ha estado {minutos} minutos en el aparcamiento. El importe a pagar es de {importeFinal} euros."
+                # if minutos != None:
+                #     # Si el coche ha estado mas de 1 minuto, se le cobra
+                #     importeFinal=minutos*0.1
+                #     informacion_importe_vehiculo.value = f"El vehiculo con matrícula {matricula} ha estado {minutos} minutos en el aparcamiento. El importe a pagar es de {importeFinal} euros."
                     
 
+                # else:
+                #     # Si el coche ha estado menos de 1 minuto, no se le cobra nada
+                #     informacion_importe_vehiculo.value = f"El vehiculo con matrícula {matricula} ha estado {minutos} minutos en el aparcamiento. No tienes que pagar nada."
+
+
+
+                                # Calculamos el importe según el tiempo que ha estado dentro
+                url = "http://localhost:5000/calcularMinutos"
+                response = req.post(url, json={"matricula": matricula})
+
+                minutos = response.json().get('minutos')
+                print("+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++")
+                print(minutos)
+                print("+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++")
+
+                if minutos is not None and minutos > 0:
+                    # Si el coche ha estado más de 0 minutos, se le cobra
+                    importe_final = round(minutos * 0.1, 2)
+                    informacion_importe_vehiculo.value = (
+                        f"El vehículo con matrícula {matricula} ha estado {minutos} minutos en el aparcamiento. "
+                        f"El importe a pagar es de {importe_final} euros."
+                    )
                 else:
-                    # Si el coche ha estado menos de 1 minuto, no se le cobra nada
-                    informacion_importe_vehiculo.value = f"El vehiculo con matrícula {matricula} ha estado {minutos} minutos en el aparcamiento. No tienes que pagar nada."
+                    # Si no se encontró el vehículo o no hay minutos válidos
+                    informacion_importe_vehiculo.value = (
+                        f"El vehículo con matrícula {matricula} no tiene minutos registrados suficientes o no existe. "
+                        "No tienes que pagar nada."
+                    )
 
                 informacion_importe_vehiculo.visible = True
 

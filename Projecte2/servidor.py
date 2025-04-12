@@ -72,20 +72,31 @@ def estado_aparcamiento():
         return jsonify({"Info": "Se ha insertado el coche en la base de datos"}), 200
 
 
-@app.route("/calcularImporte", methods=["GET"])
+@app.route("/calcularMinutos", methods=["POST"])
 def calcular_importe():
     try:
+        # Obtener la matrícula del JSON recibido
         matricula = request.json.get("matricula")
-        # Ejecutar una consulta simple
-        cur.execute("SELECT calcular_importe(%s);", (json.dumps({"matricula": matricula}),))
-        importe = cur.fetchone()[0]
+
+        print('---------------------------------')
+        print(f"Matrícula recibida: {matricula}")
+        print('---------------------------------')
+
+        # Ejecutar la función SQL
+        cur.execute("SELECT calcular_minutos(%s);", (json.dumps({"matricula": matricula}),))
+        minutos = cur.fetchone()[0]
         conn.commit()
+
+        print(f"Minutos calculados: {minutos}")
+
         # Devolver el resultado como JSON
-        return jsonify({"minutos": importe}), 200
-    
+        return jsonify({"minutos": minutos}), 200
+
     except Exception as e:
         conn.rollback()
-        return jsonify({"Info": "Error en el calculo de importe en el servidor "}), 200
+        print(f"Error: {e}")
+        return jsonify({"Info": "Error en el cálculo de minutos en el servidor"}), 500
+
    
 
 if __name__ == "__main__":
