@@ -7,7 +7,7 @@ import psycopg2
 conn = psycopg2.connect(
     dbname="Aparcamiento",
     user="postgres",
-    password="1234",
+    password="josep",
     host="localhost",   # o IP del servidor
     port="5432"         # 5432 es el puerto por defecto
 )
@@ -72,12 +72,16 @@ def estado_aparcamiento():
         return jsonify({"Info": "Se ha insertado el coche en la base de datos"}), 200
 
 
-@app.route("/calcularImporte", methods=["GET"])
+@app.route("/calcularMinutos", methods=["POST"])
 def calcular_importe():
     try:
+        
         matricula = request.json.get("matricula")
+        print('---------------------------------')
+        print(matricula)
+        print('---------------------------------')
         # Ejecutar una consulta simple
-        cur.execute("SELECT calcular_importe(%s);", (json.dumps({"matricula": matricula}),))
+        cur.execute("SELECT calcular_minutos(%s);", (json.dumps({"matricula": matricula}),))
         importe = cur.fetchone()[0]
         conn.commit()
         # Devolver el resultado como JSON

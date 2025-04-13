@@ -69,15 +69,29 @@ if __name__ == "__main__":
     if args.image:
         plate = process_image(args.image)
         if plate:
-            print(plate)  # This will be captured by the subprocess call
+            print(plate)  # ✅ SOLO imprime la matrícula
         else:
-            print("")  # Empty string if no plate found
-    else:
-        # Original batch processing mode
-        ruta_imagenes_test = os.path.join(ruta_base, "test/images")
-        for filename in os.listdir(ruta_imagenes_test):
-            if filename.lower().endswith((".jpg", ".jpeg", ".png")):
-                ruta_imagen = os.path.join(ruta_imagenes_test, filename)
-                plate = process_image(ruta_imagen)
-                if plate:
-                    print(f"Matrícula detectada en {filename}: {plate}")
+            print("")  # Matrícula vacía
+
+
+
+
+    # parser = argparse.ArgumentParser()
+    # parser.add_argument("--image", help="Path to the image file to process")
+    # args = parser.parse_args()
+
+    # if args.image:
+    #     plate = process_image(args.image)
+    #     if plate:
+    #         print(plate)  # This will be captured by the subprocess call
+    #     else:
+    #         print("")  # Empty string if no plate found
+    # else:
+    #     # Original batch processing mode
+    #     ruta_imagenes_test = os.path.join(ruta_base, "test/images")
+    #     for filename in os.listdir(ruta_imagenes_test):
+    #         if filename.lower().endswith((".jpg", ".jpeg", ".png")):
+    #             ruta_imagen = os.path.join(ruta_imagenes_test, filename)
+    #             plate = process_image(ruta_imagen)
+    #             if plate:
+    #                 print(f"Matrícula detectada en {filename}: {plate}")
