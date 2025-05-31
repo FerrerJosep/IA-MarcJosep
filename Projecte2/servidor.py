@@ -9,6 +9,9 @@ conn = psycopg2.connect(
     password="josep",
     host="localhost",  
     port="5432"        
+    password="josep",
+    host="localhost",   # o IP del servidor
+    port="5432"         # 5432 es el puerto por defecto
 )
 
 cur = conn.cursor()
@@ -71,6 +74,11 @@ def calcular_importe():
         
         matricula = request.json.get("matricula")
        
+        cur.execute("SELECT calcular_minutos(%s);", (json.dumps({"matricula": matricula}),))
+        print('---------------------------------')
+        print(matricula)
+        print('---------------------------------')
+        # Ejecutar una consulta simple
         cur.execute("SELECT calcular_minutos(%s);", (json.dumps({"matricula": matricula}),))
         importe = cur.fetchone()[0]
         conn.commit()
