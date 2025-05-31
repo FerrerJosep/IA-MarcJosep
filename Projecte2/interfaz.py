@@ -7,9 +7,34 @@ import os
 
 def main(page: ft.Page):
     page.title = "Interfaz de prueba"
+    page.scroll = ft.ScrollMode.AUTO
 
-    informacion_estado_vehiculo = ft.Text("Estado del vehículo", size=20, color=ft.colors.BLUE_900, visible=False)
-    informacion_importe_vehiculo = ft.Text("Importe del vehículo", size=20, color=ft.colors.BLUE_900, visible=False)
+    imagen_cargada = ft.Image(
+        src="",
+        width=400,
+        height=300,
+        fit=ft.ImageFit.CONTAIN,
+        border_radius=10,
+        visible=False
+    )
+
+    informacion_estado_vehiculo = ft.Text(
+        "Estado del vehículo",
+        size=20,
+        color=ft.colors.GREEN_900,
+        weight="bold",
+        visible=False,
+        text_align=ft.TextAlign.CENTER
+    )
+
+    informacion_importe_vehiculo = ft.Text(
+        "Importe del vehículo",
+        size=20,
+        weight="bold",
+        color=ft.colors.BLUE_900,
+        visible=False,
+        text_align=ft.TextAlign.CENTER
+    )
 
     campo_texto_matricula = ft.TextField(
         label="Matrícula",
@@ -19,18 +44,15 @@ def main(page: ft.Page):
         on_submit=lambda e: enviarMatricula()
     )
 
-    # Función que se llama tras detectar matrícula desde imagen
     def handle_image_result(matricula_detectada):
         if matricula_detectada:
             campo_texto_matricula.value = matricula_detectada
+            informacion_estado_vehiculo.visible = False
+            informacion_importe_vehiculo.visible = False
             page.update()
-            enviarMatricula()
 
-    # Lógica principal para enviar matrícula
     def enviarMatricula():
         matricula = campo_texto_matricula.value.strip().upper()
-        print(f"[DEBUG] Matrícula procesada: {matricula}")
-
         hora_actual = datetime.now().strftime("%H:%M:%S")
 
         if not matricula:
@@ -40,31 +62,26 @@ def main(page: ft.Page):
             page.update()
             return
 
-        # Consultar si el coche está dentro
         response = req.post("http://localhost:5000/estadoAparcamiento", json={"matricula": matricula})
         estado = response.json()
 
         if estado.get("vehi_esta_dentro"):
-            # Simular salida
             req.post("http://localhost:5000/saleCoche", json={"matricula": matricula})
             informacion_estado_vehiculo.value = f"El coche con matrícula {matricula} ha salido del aparcamiento a las {hora_actual}"
             informacion_estado_vehiculo.visible = True
 
-            # Calcular minutos
             response = req.post("http://localhost:5000/calcularMinutos", json={"matricula": matricula})
             minutos = response.json().get("minutos")
-            print(f"[DEBUG] Minutos calculados: {minutos}")
 
-            if minutos is not None and minutos > 0:
-                importe_final = round(minutos * 0.1, 2)
-                informacion_importe_vehiculo.value = f"Ha estado {minutos} minutos. Importe: {importe_final} euros."
+            if minutos is not None and minutos >= 0:
+                importe_final = round((minutos * 0.1)+0.15, 2)
+                informacion_importe_vehiculo.value = f"Ha estado {minutos} minutos. Importe: {importe_final}€."
             else:
                 informacion_importe_vehiculo.value = f"No se registraron minutos suficientes. No se cobra nada."
 
             informacion_importe_vehiculo.visible = True
 
         else:
-            # Simular entrada
             req.post("http://localhost:5000/entraCoche", json={"matricula": matricula})
             informacion_estado_vehiculo.value = f"El coche con matrícula {matricula} ha entrado al aparcamiento a las {hora_actual}"
             informacion_estado_vehiculo.visible = True
@@ -72,14 +89,17 @@ def main(page: ft.Page):
 
         page.update()
 
-    # Procesar imagen seleccionada
     def file_picker_result(e: ft.FilePickerResultEvent):
         if e.files:
             selected_file = e.files[0].path
-            print(f"[DEBUG] Imagen seleccionada: {selected_file}")
+            imagen_cargada.src = selected_file
+            imagen_cargada.visible = True
+            informacion_estado_vehiculo.visible = False
+            informacion_importe_vehiculo.visible = False
+            page.update()
 
             try:
-                script_dir = os.path.dirname(os.path.abspath(__file__))  # <-- Arreglado aquí
+                script_dir = os.path.dirname(os.path.abspath(__file__))
                 main_script_path = os.path.join(script_dir, "main.py")
 
                 if not os.path.exists(main_script_path):
@@ -92,11 +112,9 @@ def main(page: ft.Page):
                     [sys.executable, main_script_path, "--image", selected_file],
                     capture_output=True,
                     text=True,
-                    check=True,
                     cwd=script_dir
                 )
-                matricula_detectada = result.stdout.strip()
-                print(f"[DEBUG] Matrícula detectada: {matricula_detectada}")
+                matricula_detectada = result.stdout.strip().splitlines()[-1]
                 handle_image_result(matricula_detectada)
 
             except subprocess.CalledProcessError as e:
@@ -104,11 +122,9 @@ def main(page: ft.Page):
                 informacion_estado_vehiculo.visible = True
                 page.update()
 
-    # Crear FilePicker y agregarlo al overlay
     file_picker = ft.FilePicker(on_result=file_picker_result)
     page.overlay.append(file_picker)
 
-    # Botón para entrada/salida manual
     boton_aparcamiento = ft.IconButton(
         icon=ft.icons.LOCAL_PARKING,
         tooltip="Simular entrada/salida de coche",
@@ -116,23 +132,34 @@ def main(page: ft.Page):
         style=ft.ButtonStyle(icon_size=50)
     )
 
-    # Botón para subir imagen
     boton_imagen = ft.ElevatedButton(
-        text="Seleccionar imagen",
+        text="Seleccionar imagen", style=ft.ButtonStyle(
+            bgcolor=ft.colors.GREEN_600,
+            color=ft.colors.WHITE,
+            shape=ft.RoundedRectangleBorder(radius=10)
+        ),
         on_click=lambda _: file_picker.pick_files(
             allow_multiple=False,
             allowed_extensions=["jpg", "jpeg", "png"]
         )
     )
 
-    # Estructura de la UI
     page.add(
-        ft.Column([
-            ft.Row([campo_texto_matricula, boton_aparcamiento], alignment=ft.MainAxisAlignment.CENTER),
-            ft.Row([boton_imagen], alignment=ft.MainAxisAlignment.CENTER),
-            ft.Row([informacion_estado_vehiculo], alignment=ft.MainAxisAlignment.CENTER),
-            ft.Row([informacion_importe_vehiculo], alignment=ft.MainAxisAlignment.CENTER),
-        ])
+        ft.Container(
+            content=ft.Column([
+                ft.Row([campo_texto_matricula, boton_aparcamiento], alignment=ft.MainAxisAlignment.CENTER),
+                ft.Row([boton_imagen], alignment=ft.MainAxisAlignment.CENTER),
+                ft.Row([imagen_cargada], alignment=ft.MainAxisAlignment.CENTER),
+                ft.Divider(),
+                ft.Row([informacion_estado_vehiculo], alignment=ft.MainAxisAlignment.CENTER),
+                ft.Row([informacion_importe_vehiculo], alignment=ft.MainAxisAlignment.CENTER),
+
+            ]),
+            bgcolor=ft.colors.GREEN_50,
+            expand=True,
+            alignment=ft.alignment.center,
+            padding=30
+        )
     )
 
 if __name__ == "__main__":

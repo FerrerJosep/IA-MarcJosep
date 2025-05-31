@@ -4,15 +4,15 @@ from paddleocr import PaddleOCR
 import os
 import re
 import matplotlib.pyplot as plt
+import argparse
 
 ruta_base = os.path.dirname(__file__)
 ruta_modelo_yolo = os.path.join(ruta_base, "runs/detect/train7/weights/best.pt")
-ruta_imagenes_test = os.path.join(ruta_base, "test/images")
 ruta_resultados = os.path.join(ruta_base, "test/images_detectadas")
 os.makedirs(ruta_resultados, exist_ok=True)
 
 model_yolo = YOLO(ruta_modelo_yolo)
-ocr = PaddleOCR(use_angle_cls=True, lang='en', det=False)  # Solo OCR (no detection)
+ocr = PaddleOCR(use_angle_cls=True, lang='en', det=False)
 
 def preprocess_plate(image):
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
@@ -27,32 +27,25 @@ def format_plate_text(text):
         return f"{numbers[:4]}{letters[:3]}"
     return clean_text
 
-for filename in os.listdir(ruta_imagenes_test):
-    if filename.lower().endswith((".jpg", ".jpeg", ".png")):
-        ruta_imagen = os.path.join(ruta_imagenes_test, filename)
-        image = cv2.imread(ruta_imagen)
-        orig_img = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-        results = model_yolo(ruta_imagen)
+def process_image(image_path):
+    image = cv2.imread(image_path)
+    if image is None:
+        print(f"No se pudo cargar la imagen: {image_path}")
+        return None
+    
+    orig_img = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+    results = model_yolo(image_path)
+    best_plate = None
+    highest_conf = 0
 
-        for result in results:
-            for box in result.boxes:
-                x1, y1, x2, y2 = map(int, box.xyxy[0])
-                conf = float(box.conf[0])
-                cls_id = int(box.cls[0])
-                class_name = model_yolo.names[cls_id] if model_yolo.names and cls_id < len(model_yolo.names) else f"cls_{cls_id}"
-                color = (0, 255, 0)
-                thickness = 2
-                cv2.rectangle(orig_img, (x1, y1), (x2, y2), color, thickness)
-                label = f"{class_name} {conf:.2f}"
-                (tw, th), baseline = cv2.getTextSize(label, cv2.FONT_HERSHEY_SIMPLEX, 0.5, 1)
-                cv2.rectangle(orig_img, (x1, y1 - th - baseline), (x1 + tw, y1), color, -1)
-                cv2.putText(orig_img, label, (x1, y1 - baseline), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), 1)
-
-                # Recorte y preprocesado de la matrícula
+    for result in results:
+        for box in result.boxes:
+            x1, y1, x2, y2 = map(int, box.xyxy[0])
+            conf = float(box.conf[0])
+            
+            if conf > highest_conf:
                 plate_img = image[y1:y2, x1:x2]
                 processed_plate = preprocess_plate(plate_img)
-
-                # PaddleOCR espera imágenes en formato array BGR
                 result_ocr = ocr.ocr(processed_plate, cls=True)
 
                 raw_text = ''
@@ -60,21 +53,45 @@ for filename in os.listdir(ruta_imagenes_test):
                     for word_info in line:
                         raw_text += word_info[1][0]
 
-                raw_text = raw_text.upper()
                 formatted_text = format_plate_text(raw_text)
+                
+                if len(formatted_text) >= 6:  # Minimum plate length
+                    best_plate = formatted_text
+                    highest_conf = conf
 
-                print(f"\nArchivo: {filename}")
-                print(f"Texto crudo: {raw_text}")
-                print(f"Texto formateado: {formatted_text}")
-                print(f"Coordenadas: ({x1}, {y1}) - ({x2}, {y2})")
-                print(f"Confianza: {conf:.2f}")
-                text_label = f"Plate: {formatted_text}"
-                cv2.putText(orig_img, text_label, (x1, y2 + 20), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 0, 0), 2)
+    return best_plate
 
-        output_path = os.path.join(ruta_resultados, f"result_{filename}")
-        cv2.imwrite(output_path, cv2.cvtColor(orig_img, cv2.COLOR_RGB2BGR))
-        plt.figure(figsize=(16, 9))
-        plt.imshow(orig_img)
-        plt.axis('off')
-        plt.title(f"Resultados para {filename}")
-        plt.show()
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--image", help="Path to the image file to process")
+    args = parser.parse_args()
+
+    if args.image:
+        plate = process_image(args.image)
+        if plate:
+            print(plate)  
+        else:
+            print("") 
+
+
+
+
+    # parser = argparse.ArgumentParser()
+    # parser.add_argument("--image", help="Path to the image file to process")
+    # args = parser.parse_args()
+
+    # if args.image:
+    #     plate = process_image(args.image)
+    #     if plate:
+    #         print(plate)  # This will be captured by the subprocess call
+    #     else:
+    #         print("")  # Empty string if no plate found
+    # else:
+    #     # Original batch processing mode
+    #     ruta_imagenes_test = os.path.join(ruta_base, "test/images")
+    #     for filename in os.listdir(ruta_imagenes_test):
+    #         if filename.lower().endswith((".jpg", ".jpeg", ".png")):
+    #             ruta_imagen = os.path.join(ruta_imagenes_test, filename)
+    #             plate = process_image(ruta_imagen)
+    #             if plate:
+    #                 print(f"Matrícula detectada en {filename}: {plate}")
