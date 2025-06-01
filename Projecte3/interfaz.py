@@ -1,7 +1,7 @@
 import flet as ft
 from aws import consulta_simple
 
-def main(page: ft.Page):
+async def main(page: ft.Page):
     page.title = "ChatBot AWS"
     page.window_width = 600
     page.window_height = 800
@@ -22,6 +22,7 @@ def main(page: ft.Page):
         italic=True,
         color=ft.colors.GREY,
         size=12
+        
     )
 
     # Campo de entrada
@@ -116,7 +117,11 @@ def main(page: ft.Page):
         ft.Column(
             controls=[
                 chat_history,
-                typing_indicator,
+                ft.Container(
+                    typing_indicator,
+                    padding=10                   
+                ),
+                
                 
             ],
             expand=True,
