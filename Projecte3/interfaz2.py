@@ -2,7 +2,10 @@ import flet as ft
 from aws import consulta_simple
 import os
 
+
+
 def main(page: ft.Page):
+    # Título y configuración de la página
     page.title = "ChatBot AWS"
     page.window_width = 600
     page.window_height = 800
@@ -17,11 +20,15 @@ def main(page: ft.Page):
     if not os.path.exists(bot_image_path):
         bot_image_path = None
 
+    # devuelve true si el modo oscuro está activo
     def is_dark_mode():
         return page.theme_mode == ft.ThemeMode.DARK
 
+
     def apply_theme():
+        # Si esta oscuro, entra por aquí
         if is_dark_mode():
+            # Lo pone normal
             page.theme = ft.Theme(
                 color_scheme=ft.ColorScheme(
                     background=ft.colors.GREY_900,
@@ -32,12 +39,17 @@ def main(page: ft.Page):
                 )
             )
         else:
-            page.theme = ft.Theme()
+            
+            pass
+            #page.theme = ft.Theme()
+            
         page.update()
 
     apply_theme()
 
     def get_input_bg():
+        # Si está oscuro, pone un color gris oscuro
+        # Si está claro, pone un color gris claro
         return ft.colors.GREY_800 if is_dark_mode() else ft.colors.GREY_100
 
     chat_history = ft.ListView(
@@ -64,7 +76,7 @@ def main(page: ft.Page):
         max_lines=6,
         filled=True,
         border_radius=20,
-        bgcolor=get_input_bg(),
+        bgcolor=get_input_bg()
     )
 
     def send_message():
@@ -82,7 +94,7 @@ def main(page: ft.Page):
         bot_msg_bg = ft.colors.GREY_200 if not is_dark_mode() else ft.colors.GREY_700
         bot_text_color = ft.colors.BLACK if not is_dark_mode() else ft.colors.WHITE
 
-        # Mensaje del usuario (ocupa todo el ancho)
+        # Mensaje del usuario 
         chat_history.controls.append(
             ft.Container(
                 content=ft.Text(msg, selectable=True, color=user_text_color, size=14),
@@ -102,7 +114,8 @@ def main(page: ft.Page):
             print("Respuesta recibida:", respuesta)
             
             if isinstance(respuesta, dict):
-                texto = respuesta.get("text") or respuesta.get("respuesta") or str(respuesta)
+                #texto = respuesta.get("text") or respuesta.get("respuesta") or str(respuesta)
+                texto = respuesta.get("text")
             else:
                 texto = str(respuesta)
 
@@ -136,6 +149,7 @@ def main(page: ft.Page):
                     spacing=10
                 )
             )
+        # Error en la llamada.
         except Exception as e:
             print("Error:", str(e))
             chat_history.controls.append(
